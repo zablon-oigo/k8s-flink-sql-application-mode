@@ -40,3 +40,29 @@ services:
             docker-kafka-server:
               properties:
                 bootstrap.servers: "kafka:29092"
+
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.6.1
+
+    depends_on:
+      - kafka
+
+    entrypoint: ["/bin/bash", "-c"]
+
+    command:
+      - >
+        sleep 15 &&
+        kafka-topics
+        --create
+        --if-not-exists
+        --topic products
+        --bootstrap-server kafka:9092
+        --partitions 1
+        --replication-factor 1 &&
+        kafka-topics
+        --describe
+        --topic product
+        --bootstrap-server kafka:9092
+
+    restart: "no"
