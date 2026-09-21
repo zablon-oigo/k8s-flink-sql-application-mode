@@ -1,0 +1,44 @@
+---
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: products-filter
+  namespace: flink
+spec:
+  image: zablondev/flink-sql-runner:latest
+  imagePullPolicy: Always
+  flinkVersion: v1_20
+  serviceAccount: flink
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: "1"
+  podTemplate:
+    metadata:
+      annotations:
+        sql-version: "1"
+    spec:
+      containers:
+        - name: flink-main-container
+          volumeMounts:
+            - name: sql
+              mountPath: /opt/flink/sql
+              readOnly: true
+      volumes:
+        - name: sql
+          configMap:
+            name: flink-sql-job
+  jobManager:
+    resource:
+      memory: "1024m"
+      cpu: 0.5
+  taskManager:
+    resource:
+      memory: "1024m"
+      cpu: 0.5
+  job:
+    jarURI: local:///opt/flink/usrlib/flink-sql-runner.jar
+    entryClass: demo.SqlRunner
+    args:
+      - /opt/flink/sql/job.sql
+    parallelism: 1
+    upgradeMode: stateless
+    state: running
