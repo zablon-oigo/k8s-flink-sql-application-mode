@@ -1,0 +1,37 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flink-sql-job
+  namespace: flink
+data:
+  job.sql: |
+    CREATE TABLE products (
+        product_id BIGINT,
+        product_name STRING,
+        price DECIMAL(10, 2)
+    ) WITH (
+        'connector' = 'kafka',
+        'topic' = 'products',
+        'properties.bootstrap.servers' = 'host.docker.internal:9092',
+        'properties.group.id' = 'flink-products-filter',
+        'scan.startup.mode' = 'earliest-offset',
+        'format' = 'json',
+        'json.fail-on-missing-field' = 'false',
+        'json.ignore-parse-errors' = 'true'
+    );
+    CREATE TABLE expensive_products (
+        product_id BIGINT,
+        product_name STRING,
+        price DECIMAL(10, 2)
+    ) WITH (
+        'connector' = 'kafka',
+        'topic' = 'expensive-products',
+        'properties.bootstrap.servers' = 'host.docker.internal:9092',
+        'format' = 'json'
+    );
+    INSERT INTO expensive_products
+    SELECT product_id, product_name, price
+    FROM products
+    WHERE price >= 50;
+  
